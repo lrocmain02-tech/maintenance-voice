@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Micro - Maintenance</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, 'DM Sans', sans-serif;
+    background: #0d1b35;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 20px;
+  }
+  .wrap {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 20px; width: 100%; max-width: 360px; text-align: center;
+  }
+  .mic-btn {
+    width: 120px; height: 120px; border-radius: 50%;
+    background: linear-gradient(135deg, #1e3a72, #2563eb);
+    border: 3px solid rgba(255,255,255,.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 52px; cursor: pointer;
+    box-shadow: 0 0 0 0 rgba(37,99,235,.5);
+    transition: all .2s; outline: none;
+  }
+  .mic-btn.listening {
+    animation: pulse 1.2s ease-in-out infinite;
+    border-color: #34d399;
+    background: linear-gradient(135deg, #065f46, #059669);
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(52,211,153,.4); }
+    50% { box-shadow: 0 0 0 24px rgba(52,211,153,.0); }
+  }
+  .status {
+    font-size: 17px; font-weight: 700; color: rgba(255,255,255,.8);
+    min-height: 28px;
+  }
+  .transcript {
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+    border-radius: 14px; padding: 14px 16px;
+    font-size: 15px; color: rgba(255,255,255,.9); line-height: 1.6;
+    min-height: 56px; width: 100%; display: none;
+  }
+  .transcript.show { display: block; }
+  .hint {
+    font-size: 13px; color: rgba(255,255,255,.35); line-height: 1.6;
+    font-weight: 500;
+  }
+  .error {
+    color: #f87171; font-size: 14px; font-weight: 700; display: none;
+  }
+  .error.show { display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <button class="mic-btn" id="micBtn" onclick="toggleMic()">🎙️</button>
+  <div class="status" id="status">Appuyer pour parler</div>
+  <div class="transcript" id="transcript"></div>
+  <div class="hint">Ex : « Chambre A304, peinture,<br>plafond fissuré »</div>
+  <div class="error" id="error"></div>
+</div>
+
+<script>
+  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var rec = null, listening = false;
+  var TARGET_ORIGIN = '*'; // accepte tous les origins pour compatibilité
+
+  function toggleMic() {
+    if (!SpeechRecognition) {
+      showError('Reconnaissance vocale non supportée sur ce navigateur.');
+      return;
+    }
+    listening ? stopMic() : startMic();
+  }
+
+  function startMic() {
+    rec = new SpeechRecognition();
+    rec.lang = 'fr-FR';
+    rec.continuous = false;
+    rec.interimResults = true;
+    rec.maxAlternatives = 1;
+
+    listening = true;
+    setUI(true, 'Écoute en cours…');
+
+    rec.onresult = function(e) {
+      var interim = '', final = '';
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) final += e.results[i][0].transcript;
+        else interim += e.results[i][0].transcript;
+      }
+      var text = (final || interim).trim();
+      var t = document.getElementById('transcript');
+      t.textContent = text;
+      t.className = 'transcript show';
+
+      if (final) {
+        // Envoie le résultat à la fenêtre parente (l'app Google)
+        window.parent.postMessage({ type: 'VOICE_RESULT', text: final.trim() }, TARGET_ORIGIN);
+        setUI(false, '✓ Envoyé !');
+        listening = false;
+        setTimeout(function() { setUI(false, 'Appuyer pour parler'); }, 2000);
+      }
+    };
+
+    rec.onerror = function(e) {
+      listening = false;
+      setUI(false, 'Appuyer pour parler');
+      var msgs = {
+        'not-allowed': 'Accès micro refusé — autorisez le micro dans Chrome',
+        'no-speech': 'Aucune parole détectée',
+        'network': 'Erreur réseau',
+        'aborted': ''
+      };
+      if (e.error !== 'aborted') showError(msgs[e.error] || 'Erreur : ' + e.error);
+    };
+
+    rec.onend = function() {
+      if (listening) { listening = false; setUI(false, 'Appuyer pour parler'); }
+    };
+
+    try { rec.start(); } catch(e) {
+      listening = false;
+      showError('Impossible de démarrer le micro.');
+      setUI(false, 'Appuyer pour parler');
+    }
+  }
+
+  function stopMic() {
+    if (rec) try { rec.stop(); } catch(e) {}
+    listening = false;
+    setUI(false, 'Appuyer pour parler');
+  }
+
+  function setUI(isListening, msg) {
+    document.getElementById('micBtn').className = 'mic-btn' + (isListening ? ' listening' : '');
+    document.getElementById('status').textContent = msg;
+    document.getElementById('micBtn').textContent = isListening ? '⏹️' : '🎙️';
+  }
+
+  function showError(msg) {
+    if (!msg) return;
+    var el = document.getElementById('error');
+    el.textContent = msg;
+    el.className = 'error show';
+    setTimeout(function() { el.className = 'error'; }, 5000);
+  }
+
+  // Signale à la page parente que la relais est prête
+  window.parent.postMessage({ type: 'VOICE_RELAY_READY' }, TARGET_ORIGIN);
+</script>
+</body>
+</html>
