@@ -757,7 +757,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); disp
 // ══════════════════════════════════════════════════════════
 // API CONFIG — remplace cette URL après déploiement Apps Script
 // ══════════════════════════════════════════════════════════
-var API_URL = 'https://script.google.com/macros/s/AKfycbwKUivflLfa_-EFQi1bPWL9FKl1UsXDVvi_9hQqZJpsZpD7vOGsxutsIKfcWtJdjFWp7A/exec';
+var API_URL = 'https://script.google.com/macros/s/AKfycbykqg115T2CuxzkykaNrlF0aPQz7q3Pz5s5XIc3B4yJ9xEe-jASWLcXHQa2N-JgsI16CQ/exec';
 
 function apiFetch(method, data) {
   // Tout en GET pour éviter les problèmes CORS avec Apps Script
