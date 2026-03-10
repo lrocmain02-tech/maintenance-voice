@@ -757,21 +757,30 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); disp
 // ══════════════════════════════════════════════════════════
 // API CONFIG — remplace cette URL après déploiement Apps Script
 // ══════════════════════════════════════════════════════════
-var API_URL = 'https://script.google.com/macros/s/AKfycbxmb7RC7sx6IPZX_7rVUxSBDRm8j87mAUsKiOw99pIrgf9UtKxSR7G7kCb6KaNKIJ7H_Q/exec';
+var API_URL = 'https://script.google.com/macros/s/AKfycbwKUivflLfa_-EFQi1bPWL9FKl1UsXDVvi_9hQqZJpsZpD7vOGsxutsIKfcWtJdjFWp7A/exec';
 
 function apiFetch(method, data) {
   if (method === 'GET') {
     var params = Object.keys(data).map(function(k){ return encodeURIComponent(k)+'='+encodeURIComponent(data[k]); }).join('&');
-    return fetch(API_URL + '?' + params)
-      .then(function(r){ return r.json(); })
+    return fetch(API_URL + '?' + params, { redirect: 'follow' })
+      .then(function(r){
+        var ct = r.headers.get('content-type') || '';
+        if (ct.indexOf('json') === -1) throw new Error('Réponse non-JSON — vérifiez le déploiement Apps Script (accès: Tout le monde)');
+        return r.json();
+      })
       .then(function(j){ if(!j.ok) throw new Error(j.error||'Erreur API'); return j; });
   }
   return fetch(API_URL, {
     method: 'POST',
+    redirect: 'follow',
     headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify(data)
   })
-  .then(function(r){ return r.json(); })
+  .then(function(r){
+    var ct = r.headers.get('content-type') || '';
+    if (ct.indexOf('json') === -1) throw new Error('Réponse non-JSON — vérifiez le déploiement Apps Script (accès: Tout le monde)');
+    return r.json();
+  })
   .then(function(j){ if(!j.ok) throw new Error(j.error||'Erreur API'); return j; });
 }
 
