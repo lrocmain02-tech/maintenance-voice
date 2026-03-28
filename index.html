@@ -2464,65 +2464,153 @@ function doExcel(){
   var now=new Date(),p=pad;
   var ds=p(now.getDate())+'/'+p(now.getMonth()+1)+'/'+now.getFullYear()+' '+p(now.getHours())+':'+p(now.getMinutes());
 
-  // ── Construire les lignes CSV
-  var rows=[];
+  var xml='<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?>'
+    +'<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'
+    +'<Styles>'
+    +'<Style ss:ID="titre"><Font ss:Bold="1" ss:Size="14" ss:Color="#FFFFFF"/><Interior ss:Color="#0D1B35" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>'
+    +'<Style ss:ID="h"><Font ss:Bold="1" ss:Size="10" ss:Color="#FFFFFF"/><Interior ss:Color="#1E3A72" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#60A5FA"/></Borders></Style>'
+    +'<Style ss:ID="gm"><Font ss:Bold="1" ss:Size="9" ss:Color="#1E40AF"/><Interior ss:Color="#DBEAFE" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>'
+    +'<Style ss:ID="go"><Font ss:Bold="1" ss:Size="9" ss:Color="#5B21B6"/><Interior ss:Color="#EDE9FE" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>'
+    +'<Style ss:ID="ch_gm"><Font ss:Bold="1" ss:Size="11" ss:Color="#1E3A72"/><Interior ss:Color="#DBEAFE" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>'
+    +'<Style ss:ID="ch_go"><Font ss:Bold="1" ss:Size="11" ss:Color="#5B21B6"/><Interior ss:Color="#EDE9FE" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>'
+    +'<Style ss:ID="ok"><Font ss:Bold="1" ss:Size="9" ss:Color="#065F46"/><Interior ss:Color="#D1FAE5" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>'
+    +'<Style ss:ID="ko"><Font ss:Size="9" ss:Color="#991B1B"/><Interior ss:Color="#FEF2F2" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>'
+    +'<Style ss:ID="v2ok"><Font ss:Bold="1" ss:Size="9" ss:Color="#4C1D95"/><Interior ss:Color="#DDD6FE" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>'
+    +'<Style ss:ID="v2ko"><Font ss:Size="9" ss:Color="#9CA3AF"/><Interior ss:Color="#F9FAFB" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>'
+    +'<Style ss:ID="bat_gm"><Font ss:Bold="1" ss:Size="9" ss:Color="#1E3A72"/><Interior ss:Color="#EFF6FF" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>'
+    +'<Style ss:ID="bat_go"><Font ss:Bold="1" ss:Size="9" ss:Color="#5B21B6"/><Interior ss:Color="#F5F3FF" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>'
+    +'<Style ss:ID="etage"><Font ss:Size="9" ss:Color="#475569"/><Interior ss:Color="#F8FAFC" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>'
+    +'<Style ss:ID="rep"><Font ss:Size="9" ss:Color="#0F172A"/><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/><Alignment ss:WrapText="1"/></Style>'
+    +'<Style ss:ID="rep_alt"><Font ss:Size="9" ss:Color="#0F172A"/><Interior ss:Color="#F8FAFC" ss:Pattern="Solid"/><Alignment ss:WrapText="1"/></Style>'
+    +'<Style ss:ID="type_m"><Font ss:Bold="1" ss:Size="9" ss:Color="#92400E"/><Interior ss:Color="#FEF3C7" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>'
+    +'<Style ss:ID="type_p"><Font ss:Bold="1" ss:Size="9" ss:Color="#1E40AF"/><Interior ss:Color="#DBEAFE" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>'
+    +'<Style ss:ID="type_e"><Font ss:Bold="1" ss:Size="9" ss:Color="#991B1B"/><Interior ss:Color="#FEE2E2" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>'
+    +'<Style ss:ID="type_a"><Font ss:Bold="1" ss:Size="9" ss:Color="#166534"/><Interior ss:Color="#DCFCE7" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>'
+    +'<Style ss:ID="date"><Font ss:Size="9" ss:Color="#475569"/><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>'
+    +'<Style ss:ID="date_alt"><Font ss:Size="9" ss:Color="#475569"/><Interior ss:Color="#F8FAFC" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>'
+    +'<Style ss:ID="comment"><Font ss:Italic="1" ss:Size="9" ss:Color="#475569"/><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/><Alignment ss:WrapText="1"/></Style>'
+    +'<Style ss:ID="comment_alt"><Font ss:Italic="1" ss:Size="9" ss:Color="#475569"/><Interior ss:Color="#F8FAFC" ss:Pattern="Solid"/><Alignment ss:WrapText="1"/></Style>'
+    +'<Style ss:ID="photo"><Font ss:Size="9" ss:Color="#2563EB"/><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>'
+    +'<Style ss:ID="photo_alt"><Font ss:Size="9" ss:Color="#2563EB"/><Interior ss:Color="#F8FAFC" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>'
+    +'</Styles>'
+    +'<Worksheet ss:Name="Maintenance"><Table>'
+    // Largeurs colonnes
+    +'<Column ss:Width="70"/>'   // Chambre
+    +'<Column ss:Width="50"/>'   // GM/GO
+    +'<Column ss:Width="80"/>'   // Bâtiment
+    +'<Column ss:Width="45"/>'   // Étage
+    +'<Column ss:Width="220"/>'  // Réparation
+    +'<Column ss:Width="110"/>'  // Type
+    +'<Column ss:Width="65"/>'   // Statut
+    +'<Column ss:Width="120"/>'  // Date valid. tech
+    +'<Column ss:Width="90"/>'   // Validé par (tech)
+    +'<Column ss:Width="75"/>'   // Contrôle sup
+    +'<Column ss:Width="120"/>'  // Date contrôle sup
+    +'<Column ss:Width="90"/>'   // Validé par (sup)
+    +'<Column ss:Width="180"/>'  // Commentaire
+    +'<Column ss:Width="80"/>'   // Photo
+    // Ligne titre
+    +'<Row ss:Height="28"><Cell ss:MergeAcross="13" ss:StyleID="titre"><Data ss:Type="String">🔧 Rapport Maintenance — '+ds+(currentUser?' — '+currentUser:'')+'</Data></Cell></Row>'
+    // Ligne stats résumé
+    +'<Row ss:Height="20">';
 
-  // En-tête
-  rows.push([
-    'CHAMBRE','TYPE GM/GO','BÂTIMENT','ÉTAGE',
-    'RÉPARATION','TYPE','STATUT',
-    'DATE VALIDATION TECH','VALIDÉ PAR (TECH)',
-    'CONTRÔLE SUPERVISEUR','DATE CONTRÔLE','VALIDÉ PAR (SUP)',
-    'COMMENTAIRE','PHOTO'
-  ]);
+  var tf=0; f.forEach(function(r){if(r.fait)tf++;});
+  var pct=f.length?Math.round(tf/f.length*100):0;
+  var toCheck=f.filter(function(r){return r.fait&&!r.valide2;}).length;
+  var v2done=f.filter(function(r){return r.valide2;}).length;
+
+  xml+='<Cell ss:MergeAcross="2" ss:StyleID="ok"><Data ss:Type="String">✓ Terminées : '+tf+' / '+f.length+'</Data></Cell>'
+    +'<Cell ss:StyleID="ok"><Data ss:Type="String">'+pct+'%</Data></Cell>'
+    +'<Cell ss:MergeAcross="1" ss:StyleID="ko"><Data ss:Type="String">⏳ À faire : '+(f.length-tf)+'</Data></Cell>'
+    +'<Cell ss:MergeAcross="1" ss:StyleID="v2ok"><Data ss:Type="String">✓✓ Contrôlées : '+v2done+'</Data></Cell>'
+    +'<Cell ss:MergeAcross="1" ss:StyleID="v2ko"><Data ss:Type="String">🟣 À contrôler : '+toCheck+'</Data></Cell>'
+    +'<Cell ss:MergeAcross="4" ss:StyleID="etage"><Data ss:Type="String"></Data></Cell>'
+    +'</Row>';
+
+  // Ligne vide séparatrice
+  xml+='<Row ss:Height="6"><Cell ss:MergeAcross="13" ss:StyleID="etage"><Data ss:Type="String"></Data></Cell></Row>';
+
+  // En-têtes colonnes
+  xml+='<Row ss:Height="32">'
+    +'<Cell ss:StyleID="h"><Data ss:Type="String">CHAMBRE</Data></Cell>'
+    +'<Cell ss:StyleID="h"><Data ss:Type="String">GM/GO</Data></Cell>'
+    +'<Cell ss:StyleID="h"><Data ss:Type="String">BÂTIMENT</Data></Cell>'
+    +'<Cell ss:StyleID="h"><Data ss:Type="String">ÉTAGE</Data></Cell>'
+    +'<Cell ss:StyleID="h"><Data ss:Type="String">RÉPARATION</Data></Cell>'
+    +'<Cell ss:StyleID="h"><Data ss:Type="String">TYPE</Data></Cell>'
+    +'<Cell ss:StyleID="h"><Data ss:Type="String">STATUT</Data></Cell>'
+    +'<Cell ss:StyleID="h"><Data ss:Type="String">DATE VALID. TECH</Data></Cell>'
+    +'<Cell ss:StyleID="h"><Data ss:Type="String">VALIDÉ PAR (TECH)</Data></Cell>'
+    +'<Cell ss:StyleID="h"><Data ss:Type="String">CONTRÔLE SUP</Data></Cell>'
+    +'<Cell ss:StyleID="h"><Data ss:Type="String">DATE CONTRÔLE SUP</Data></Cell>'
+    +'<Cell ss:StyleID="h"><Data ss:Type="String">VALIDÉ PAR (SUP)</Data></Cell>'
+    +'<Cell ss:StyleID="h"><Data ss:Type="String">COMMENTAIRE</Data></Cell>'
+    +'<Cell ss:StyleID="h"><Data ss:Type="String">PHOTO</Data></Cell>'
+    +'</Row>';
 
   // Données
-  f.forEach(function(r){
+  f.forEach(function(r, idx){
+    var alt = idx%2===1;
     var k=rk(r), ls=localDates[k], ls2=localDates2[k];
-    var chambreType = isGoRoom(r.chambre) ? 'GO/GE' : 'GM';
-    var bat  = getBat(r.chambre) || '';
-    var etage = getEtage(r.chambre) || '';
-    var statut = r.fait ? '✓ Fait' : '⏳ À faire';
-    var dateValidTech = ls ? ls.d : (r.dateValidation ? formatDate(r.dateValidation) : '');
-    var validParTech  = ls ? ls.p : (r.validePar || '');
-    var controle2     = r.valide2 ? '✓ Contrôlé' : '';
-    var dateControle2 = ls2 ? ls2.d : (r.dateValidation2 ? formatDate(r.dateValidation2) : '');
-    var validPar2     = ls2 ? ls2.p : (r.validePar2 || '');
+    var goRoom = isGoRoom(r.chambre);
+    var bat = getBat(r.chambre)||'';
+    var etage = getEtage(r.chambre)||'';
+    var batLabel_v = bat==='5T'?'Bâtiment 5T':'Bâtiment '+bat;
 
-    rows.push([
-      r.chambre, chambreType, bat === '5T' ? 'Bâtiment 5T' : 'Bâtiment ' + bat,
-      etage, r.reparation, r.type || '', statut,
-      dateValidTech, validParTech,
-      controle2, dateControle2, validPar2,
-      r.commentaire || '', r.photo || ''
-    ]);
+    // Styles selon GM/GO
+    var stCh   = goRoom?'ch_go':'ch_gm';
+    var stGmGo = goRoom?'go':'gm';
+    var stBat  = goRoom?'bat_go':'bat_gm';
+    var stRep  = alt?'rep_alt':'rep';
+    var stDate = alt?'date_alt':'date';
+    var stCom  = alt?'comment_alt':'comment';
+    var stPho  = alt?'photo_alt':'photo';
+
+    // Type
+    var tl=(r.type||'').toLowerCase();
+    var stType = tl.indexOf('menuiserie')>=0?'type_m':tl.indexOf('peinture')>=0?'type_p':tl.indexOf('plomb')>=0||tl.indexOf('lectri')>=0?'type_e':'type_a';
+
+    // Statut
+    var stStatut = r.fait?'ok':'ko';
+    var statutTxt = r.fait?'✓ Fait':'⏳ À faire';
+
+    // Double validation
+    var stV2 = r.valide2?'v2ok':'v2ko';
+    var v2Txt = r.valide2?'✓✓ Contrôlé':'—';
+
+    // Dates et auteurs
+    var dateValidTech = ls?ls.d:(r.dateValidation?formatDate(r.dateValidation):'');
+    var validParTech  = ls?ls.p:(r.validePar||'');
+    var dateControle2 = ls2?ls2.d:(r.dateValidation2?formatDate(r.dateValidation2):'');
+    var validPar2     = ls2?ls2.p:(r.validePar2||'');
+
+    xml+='<Row ss:Height="18">'
+      +'<Cell ss:StyleID="'+stCh+'"><Data ss:Type="String">'+esc(r.chambre)+'</Data></Cell>'
+      +'<Cell ss:StyleID="'+stGmGo+'"><Data ss:Type="String">'+(goRoom?'🛎️ GO/GE':'🏨 GM')+'</Data></Cell>'
+      +'<Cell ss:StyleID="'+stBat+'"><Data ss:Type="String">'+esc(batLabel_v)+'</Data></Cell>'
+      +'<Cell ss:StyleID="etage"><Data ss:Type="String">'+esc(etage)+'</Data></Cell>'
+      +'<Cell ss:StyleID="'+stRep+'"><Data ss:Type="String">'+esc(r.reparation)+'</Data></Cell>'
+      +'<Cell ss:StyleID="'+stType+'"><Data ss:Type="String">'+esc(r.type||'—')+'</Data></Cell>'
+      +'<Cell ss:StyleID="'+stStatut+'"><Data ss:Type="String">'+statutTxt+'</Data></Cell>'
+      +'<Cell ss:StyleID="'+stDate+'"><Data ss:Type="String">'+esc(dateValidTech)+'</Data></Cell>'
+      +'<Cell ss:StyleID="'+stDate+'"><Data ss:Type="String">'+esc(validParTech)+'</Data></Cell>'
+      +'<Cell ss:StyleID="'+stV2+'"><Data ss:Type="String">'+v2Txt+'</Data></Cell>'
+      +'<Cell ss:StyleID="'+stDate+'"><Data ss:Type="String">'+esc(dateControle2)+'</Data></Cell>'
+      +'<Cell ss:StyleID="'+stDate+'"><Data ss:Type="String">'+esc(validPar2)+'</Data></Cell>'
+      +'<Cell ss:StyleID="'+stCom+'"><Data ss:Type="String">'+esc(r.commentaire||'')+'</Data></Cell>'
+      +'<Cell ss:StyleID="'+stPho+'"><Data ss:Type="String">'+esc(r.photo||'')+'</Data></Cell>'
+      +'</Row>';
   });
 
-  // ── Encoder en CSV UTF-8 (Google Sheets l'importe nativement)
-  function csvCell(v){
-    v = String(v==null?'':v);
-    // Échapper les guillemets et encapsuler si nécessaire
-    if(v.indexOf(',')>=0 || v.indexOf('"')>=0 || v.indexOf('\n')>=0){
-      return '"'+v.replace(/"/g,'""')+'"';
-    }
-    return v;
-  }
+  xml+='</Table></Worksheet></Workbook>';
 
-  var csv = rows.map(function(row){
-    return row.map(csvCell).join(',');
-  }).join('\r\n');
-
-  // ── BOM UTF-8 pour que Google Sheets détecte bien l'encodage
-  var bom = '\uFEFF';
-  var blob = new Blob([bom + csv], {type:'text/csv;charset=utf-8;'});
-  var url  = URL.createObjectURL(blob);
-  var a    = document.createElement('a');
-  a.href   = url;
-  a.download = 'maintenance_'+now.getFullYear()+pad(now.getMonth()+1)+pad(now.getDate())+'_'+pad(now.getHours())+pad(now.getMinutes())+'.csv';
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([xml],{type:'application/vnd.ms-excel;charset=utf-8;'}));
+  a.download='maintenance_'+now.getFullYear()+pad(now.getMonth()+1)+pad(now.getDate())+'_'+pad(now.getHours())+pad(now.getMinutes())+'.xls';
   document.body.appendChild(a);
   a.click();
-  setTimeout(function(){ URL.revokeObjectURL(url); document.body.removeChild(a); }, 500);
-  toast('✓ CSV téléchargé — importer dans Google Sheets !','ok');
+  setTimeout(function(){URL.revokeObjectURL(a.href);document.body.removeChild(a);},500);
+  toast('✓ Export Excel téléchargé !','ok');
 }
 
 function closePdfOverlay(){
