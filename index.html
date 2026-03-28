@@ -1020,10 +1020,11 @@ var USER_PROFILES = {
   'Tech-3':    { role:'tech',  pin:'1234' },
   'Tech-4':    { role:'tech',  pin:'1234' },
   'Tech-5':    { role:'tech',  pin:'1234' },
+  'Chevalier':    { role:'asstech',  pin:'1111' },
   'ASSTECH-1': { role:'asstech', pin:'4545' },
   'ASSTECH-2': { role:'asstech', pin:'4545' },
   'ASSTECH-3': { role:'asstech', pin:'4545' },
-  'RT':        { role:'rt',    pin:'9999' }
+  'RT':        { role:'rt',    pin:'4545' }
 };
 // Rôles pouvant faire la double validation (contrôle au-dessus des techs)
 var SUPERVISOR_ROLES = ['asstech', 'rt'];
@@ -1083,8 +1084,8 @@ var PLAN_GO = {
     {lbl:'3',rooms:['A301A/B','A302A/B']},
     {lbl:'2',rooms:['A201A/B','A202A/B','A228','A229']},
     {lbl:'1',rooms:['A101A/B','A102A/B','A127','A128']},
-    {lbl:'0',rooms:['1A/B','2A/B','25']},
-    {lbl:'-1',rooms:['-101A/B','-102A/B']}
+    {lbl:'0',rooms:['A1A/B','A2A/B','A25']},
+    {lbl:'-1',rooms:['A-101A/B','A-102A/B']}
   ]},
   'B':{label:'Bâtiment B',floors:[
     {lbl:'5',rooms:['B536A/B','B537A/B','B538A/B','B539A/B','B540','B541']},
@@ -1095,15 +1096,15 @@ var PLAN_GO = {
     {lbl:'0',rooms:['B31','B32A/B/C','B33A/B','B34A/B','B35A/B','B36A/B','B37A/B/C','B038A/B/C','B39A/B','B40','B41','B42','B43','B44A/B','B45A/B','B46','B47']}
   ]},
   'C':{label:'Bâtiment C',floors:[
-    {lbl:'8',rooms:['851']},
-    {lbl:'7',rooms:['751']},
-    {lbl:'6',rooms:['651']},
-    {lbl:'5',rooms:['551AA/AB','551BA/BB','5511','552AA/AB','552BA/BB','552CA/CB']},
-    {lbl:'4',rooms:['451A/B','452A/B','453A/B','454A/B','455A/B','456A/B','457A/B','458A/B','459A/B','460A/B','461A/B','462','463','464','465A/B','466A/B','467','468']},
-    {lbl:'3',rooms:['351A/B','352A/B','353A/B','354A/B','355A/B','356A/B','357A/B','358A/B','359A/B','360A/B','361A/B','362','363','364A/B','365A/B','366A/B','367A/B','368A/B']},
-    {lbl:'2',rooms:['251A/B','252A/B','253A/B','254A/B','255A/B','256A/B','257A/B','258A/B','259/AB','260A/B','261A/B','262A/B','263A/B','264A/B','265A/B','266A/B','267A/B','268A/B']},
-    {lbl:'1',rooms:['151A/B','152A/B','153A/B','154A/B','155A/B','156A/B','157A/B','158A/B','159A/B','160A/B','161A/B','162A/B','163A/B','164A/B','165A/B','166','167','168']},
-    {lbl:'0',rooms:['B51A/B','B52A/B','B53A/B','B54A/B','B55A/B','B56A/B','B57A/B','B58A/B','B59']}
+    {lbl:'8',rooms:['C851']},
+    {lbl:'7',rooms:['C751']},
+    {lbl:'6',rooms:['C651']},
+    {lbl:'5',rooms:['C551AA/AB','C551BA/BB','C5511','C552AA/AB','C552BA/BB','C552CA/CB']},
+    {lbl:'4',rooms:['C451A/B','C452A/B','C453A/B','C454A/B','C455A/B','C456A/B','C457A/B','C458A/B','C459A/B','C460A/B','C461A/B','C462','C463','C464','C465A/B','C466A/B','C467','C468']},
+    {lbl:'3',rooms:['C351A/B','C352A/B','C353A/B','C354A/B','C355A/B','C356A/B','C357A/B','C358A/B','C359A/B','C360A/B','C361A/B','C362','C363','C364A/B','C365A/B','C366A/B','C367A/B','C368A/B']},
+    {lbl:'2',rooms:['C251A/B','C252A/B','C253A/B','C254A/B','C255A/B','C256A/B','C257A/B','C258A/B','C259/AB','C260A/B','C261A/B','C262A/B','C263A/B','C264A/B','C265A/B','C266A/B','C267A/B','C268A/B']},
+    {lbl:'1',rooms:['C151A/B','C152A/B','C153A/B','C154A/B','C155A/B','C156A/B','C157A/B','C158A/B','C159A/B','C160A/B','C161A/B','C162A/B','C163A/B','C164A/B','C165A/B','C166','C167','C168']},
+    {lbl:'0',rooms:['C51A/B','C52A/B','C53A/B','C54A/B','C55A/B','C56A/B','C57A/B','C58A/B','C59']}
   ]},
   'D':{label:'Bâtiment D',floors:[
     {lbl:'7',rooms:['D787','D788','D789']},
