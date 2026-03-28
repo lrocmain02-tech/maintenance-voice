@@ -2463,37 +2463,66 @@ function doExcel(){
   var f=getFiltered();if(!f.length){toast('Aucune donnée','err');return;}
   var now=new Date(),p=pad;
   var ds=p(now.getDate())+'/'+p(now.getMonth()+1)+'/'+now.getFullYear()+' '+p(now.getHours())+':'+p(now.getMinutes());
-  var xml='<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?>'
-    +'<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'
-    +'<Styles><Style ss:ID="h"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#0D1B35" ss:Pattern="Solid"/></Style>'
-    +'<Style ss:ID="ok"><Interior ss:Color="#D1FAE5" ss:Pattern="Solid"/><Font ss:Color="#065F46"/></Style>'
-    +'<Style ss:ID="ko"><Interior ss:Color="#FEF2F2" ss:Pattern="Solid"/><Font ss:Color="#991B1B"/></Style>'
-    +'<Style ss:ID="ch"><Font ss:Bold="1" ss:Color="#0D1B35"/><Interior ss:Color="#DBEAFE" ss:Pattern="Solid"/></Style></Styles>'
-    +'<Worksheet ss:Name="Maintenance"><Table>'
-    +'<Column ss:Width="80"/><Column ss:Width="180"/><Column ss:Width="110"/><Column ss:Width="65"/><Column ss:Width="130"/><Column ss:Width="110"/><Column ss:Width="160"/>'
-    +'<Row><Cell ss:MergeAcross="6"><Data ss:Type="String">Rapport Maintenance — '+ds+'</Data></Cell></Row><Row/>'
-    +'<Row><Cell ss:StyleID="h"><Data ss:Type="String">CHAMBRE</Data></Cell>'
-    +'<Cell ss:StyleID="h"><Data ss:Type="String">RÉPARATION</Data></Cell>'
-    +'<Cell ss:StyleID="h"><Data ss:Type="String">TYPE</Data></Cell>'
-    +'<Cell ss:StyleID="h"><Data ss:Type="String">STATUT</Data></Cell>'
-    +'<Cell ss:StyleID="h"><Data ss:Type="String">DATE</Data></Cell>'
-    +'<Cell ss:StyleID="h"><Data ss:Type="String">VALIDÉ PAR</Data></Cell>'
-    +'<Cell ss:StyleID="h"><Data ss:Type="String">COMMENTAIRE</Data></Cell></Row>';
+
+  // ── Construire les lignes CSV
+  var rows=[];
+
+  // En-tête
+  rows.push([
+    'CHAMBRE','TYPE GM/GO','BÂTIMENT','ÉTAGE',
+    'RÉPARATION','TYPE','STATUT',
+    'DATE VALIDATION TECH','VALIDÉ PAR (TECH)',
+    'CONTRÔLE SUPERVISEUR','DATE CONTRÔLE','VALIDÉ PAR (SUP)',
+    'COMMENTAIRE','PHOTO'
+  ]);
+
+  // Données
   f.forEach(function(r){
-    var k=rk(r),ls=localDates[k],s=r.fait?'ok':'ko';
-    xml+='<Row><Cell ss:StyleID="ch"><Data ss:Type="String">'+esc(r.chambre)+'</Data></Cell>'
-      +'<Cell ss:StyleID="'+s+'"><Data ss:Type="String">'+esc(r.reparation)+'</Data></Cell>'
-      +'<Cell ss:StyleID="'+s+'"><Data ss:Type="String">'+esc(r.type)+'</Data></Cell>'
-      +'<Cell ss:StyleID="'+s+'"><Data ss:Type="String">'+(r.fait?'✓ Fait':'⏳ À faire')+'</Data></Cell>'
-      +'<Cell ss:StyleID="'+s+'"><Data ss:Type="String">'+esc(ls?ls.d:(r.date||''))+'</Data></Cell>'
-      +'<Cell ss:StyleID="'+s+'"><Data ss:Type="String">'+esc(ls?ls.p:(r.validePar||''))+'</Data></Cell>'
-      +'<Cell ss:StyleID="'+s+'"><Data ss:Type="String">'+esc(r.commentaire||'')+'</Data></Cell></Row>';
+    var k=rk(r), ls=localDates[k], ls2=localDates2[k];
+    var chambreType = isGoRoom(r.chambre) ? 'GO/GE' : 'GM';
+    var bat  = getBat(r.chambre) || '';
+    var etage = getEtage(r.chambre) || '';
+    var statut = r.fait ? '✓ Fait' : '⏳ À faire';
+    var dateValidTech = ls ? ls.d : (r.dateValidation ? formatDate(r.dateValidation) : '');
+    var validParTech  = ls ? ls.p : (r.validePar || '');
+    var controle2     = r.valide2 ? '✓ Contrôlé' : '';
+    var dateControle2 = ls2 ? ls2.d : (r.dateValidation2 ? formatDate(r.dateValidation2) : '');
+    var validPar2     = ls2 ? ls2.p : (r.validePar2 || '');
+
+    rows.push([
+      r.chambre, chambreType, bat === '5T' ? 'Bâtiment 5T' : 'Bâtiment ' + bat,
+      etage, r.reparation, r.type || '', statut,
+      dateValidTech, validParTech,
+      controle2, dateControle2, validPar2,
+      r.commentaire || '', r.photo || ''
+    ]);
   });
-  xml+='</Table></Worksheet></Workbook>';
-  var a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([xml],{type:'application/vnd.ms-excel;charset=utf-8;'}));
-  a.download='maintenance_'+now.getFullYear()+pad(now.getMonth()+1)+pad(now.getDate())+'.xls';
-  a.click();toast('Export Excel téléchargé !','ok');
+
+  // ── Encoder en CSV UTF-8 (Google Sheets l'importe nativement)
+  function csvCell(v){
+    v = String(v==null?'':v);
+    // Échapper les guillemets et encapsuler si nécessaire
+    if(v.indexOf(',')>=0 || v.indexOf('"')>=0 || v.indexOf('\n')>=0){
+      return '"'+v.replace(/"/g,'""')+'"';
+    }
+    return v;
+  }
+
+  var csv = rows.map(function(row){
+    return row.map(csvCell).join(',');
+  }).join('\r\n');
+
+  // ── BOM UTF-8 pour que Google Sheets détecte bien l'encodage
+  var bom = '\uFEFF';
+  var blob = new Blob([bom + csv], {type:'text/csv;charset=utf-8;'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href   = url;
+  a.download = 'maintenance_'+now.getFullYear()+pad(now.getMonth()+1)+pad(now.getDate())+'_'+pad(now.getHours())+pad(now.getMinutes())+'.csv';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); document.body.removeChild(a); }, 500);
+  toast('✓ CSV téléchargé — importer dans Google Sheets !','ok');
 }
 
 function closePdfOverlay(){
