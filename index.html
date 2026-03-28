@@ -2461,6 +2461,22 @@ function renderStats(){
 // ══════════════════════════════════════════════════════════
 function doExcel(){
   var f=getFiltered();if(!f.length){toast('Aucune donnée','err');return;}
+  // Ordre des bâtiments : 5T en premier, puis A, B, C, D
+var BAT_ORDER={'5T':0,'A':1,'B':2,'C':3,'D':4};
+
+f.sort(function(a,b){
+  var ba=getBat(a.chambre), bb=getBat(b.chambre);
+  // Tri par bâtiment
+  var oa=BAT_ORDER[ba]!==undefined?BAT_ORDER[ba]:99;
+  var ob=BAT_ORDER[bb]!==undefined?BAT_ORDER[bb]:99;
+  if(oa!==ob) return oa-ob;
+  // Tri par étage (numérique, décroissant : étage haut en premier)
+  var ea=getEtage(a.chambre)||'0', eb=getEtage(b.chambre)||'0';
+  var na=parseInt(ea,10), nb=parseInt(eb,10);
+  if(na!==nb) return nb-na;
+  // Tri par numéro de chambre (alphanumérique)
+  return a.chambre.localeCompare(b.chambre,undefined,{numeric:true});
+});
   var now=new Date(),p=pad;
   var ds=p(now.getDate())+'/'+p(now.getMonth()+1)+'/'+now.getFullYear()+' '+p(now.getHours())+':'+p(now.getMinutes());
 
