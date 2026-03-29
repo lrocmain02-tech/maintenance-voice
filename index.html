@@ -864,8 +864,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); disp
     <button class="plan-type-btn" data-type="peinture" onclick="setPlanTypeFilter(this,'peinture')">🎨 Peinture</button>
     <button class="plan-type-btn" data-type="menuiserie" onclick="setPlanTypeFilter(this,'menuiserie')">🪵 Menuiserie</button>
     <button class="plan-type-btn" data-type="plomb" onclick="setPlanTypeFilter(this,'plomb')">⚡ Plomberie/Élec</button>
-    <button class="plan-type-btn" data-type="autre" onclick="setPlanTypeFilter(this,'autre')">🔧 Autre</button>
-  </div>
+    </div>
   <div class="plan-scroll">
     <div class="plan-legend">
       <div class="leg-item"><div class="leg-dot" style="background:#e2e8f0;border:1.5px solid #cbd5e1"></div><span>Aucune tâche</span></div>
@@ -1719,7 +1718,6 @@ function getRoomStatusFiltered(chambre, typeFilter) {
       if (typeFilter==='peinture')   return tl.indexOf('peinture')>=0;
       if (typeFilter==='menuiserie') return tl.indexOf('menuiserie')>=0;
       if (typeFilter==='plomb')      return tl.indexOf('plomb')>=0||tl.indexOf('lectri')>=0;
-      if (typeFilter==='autre')      return tl.indexOf('peinture')<0&&tl.indexOf('menuiserie')<0&&tl.indexOf('plomb')<0&&tl.indexOf('lectri')<0;
       return true;
     });
     // Si aucune tâche de ce type dans cette chambre : pas de tâche à afficher
