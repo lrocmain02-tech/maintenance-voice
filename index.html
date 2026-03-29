@@ -719,6 +719,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); disp
 .plan-type-btn[data-type="menuiserie"].active { background:#fef3c7;color:#92400e;border-color:#fcd34d; }
 .plan-type-btn[data-type="plomb"].active { background:#fee2e2;color:#991b1b;border-color:#fca5a5; }
 .plan-type-btn[data-type="autre"].active { background:#dcfce7;color:#166534;border-color:#86efac; }
+-webkit-print-color-adjust:exact;print-color-adjust:exact;
   
 </style>
 </head>
@@ -1765,12 +1766,9 @@ function renderPlan(){
         if(status.state==='no-task'){
           cellClass+='no-task';
           innerHtml=shortNum+(isGO?'<span style="font-size:7px;display:block;color:#94a3b8;font-weight:700">GO</span>':'');
-        } else if(status.state==='all-v2'){
-          cellClass+='all-v2';
-          innerHtml='<span style="color:#fff;font-weight:900;font-size:10px;line-height:1.1;text-align:center;display:block">'+shortNum+(isGO?'<br><span style="font-size:7px;font-weight:800;opacity:.9">GO</span>':'')+'<br><span style="font-size:8px;opacity:.9">✓✓</span></span>';
         } else if(status.state==='all-done'){
           cellClass+='all-done';
-          innerHtml='<span style="color:#fff;font-weight:900">'+shortNum+'</span>'+(isGO?'<span style="font-size:7px;display:block;color:rgba(255,255,255,.85);font-weight:800">GO</span>':'');
+          innerHtml='<span style="color:#fff;font-weight:900;font-size:10px;line-height:1.1;text-align:center;display:block">'+shortNum+(isGO?'<br><span style="font-size:7px;font-weight:800;opacity:.9">GO</span>':'')+'<br><span style="font-size:9px;opacity:.95">✓</span></span>';
         } else {
           cellStyle='background:'+buildGradient(status.colors)+';border-color:'+status.colors[0]+';';
           innerHtml='<span style="color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.6);font-weight:900;display:block;text-align:center;line-height:1.2">'+shortNum+(isGO?'<span style="font-size:7px;display:block;font-weight:800;opacity:.9">GO</span>':'')+'</span>';
@@ -2733,10 +2731,11 @@ function doPlanPDF(){
     +'.floor-row-pdf:last-child{margin-bottom:0}'
     +'.floor-lbl-pdf{font-size:9px;font-weight:900;color:#0d1b35;width:24px;text-align:center;flex-shrink:0;background:#f0f4f8;border-radius:4px;padding:3px 0;border:1px solid #e2e8f0}'
     +'.floor-rooms-pdf{display:flex;flex-wrap:wrap;gap:3px;flex:1}'
-    +'.cell-pdf{width:34px;height:34px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;font-weight:900;border:1px solid transparent;position:relative;flex-shrink:0}'
-    +'.cell-no-task{background:#e2e8f0;border-color:#cbd5e1;color:#94a3b8}'
-    +'.cell-done{background:#059669;color:#fff}'
-    +'.cell-v2{background:#7c3aed;color:#fff}'
+    +'.cell-pdf{width:34px;height:34px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;font-weight:900;border:1px solid transparent;position:relative;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}'
+    +'.cell-no-task{background:#e2e8f0;border-color:#cbd5e1;color:#94a3b8;-webkit-print-color-adjust:exact;print-color-adjust:exact;}'
+    +'.cell-done{background:#059669;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}'
+    +'.cell-v2{background:#7c3aed;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}'
+    +'*{-webkit-print-color-adjust:exact;print-color-adjust:exact;}'
     +'</style></head><body>';
 
   h+='<div class="page-hdr">'
@@ -2779,10 +2778,11 @@ function doPlanPDF(){
           inner='<span style="color:#fff;font-size:7px;text-align:center;display:block;line-height:1.2">'+shortNum+(isGO?'<br><span style="font-size:5px">GO</span>':'')+'<br>✓✓</span>';
         } else if(status.state==='all-done'){
           cellCls+='cell-done';
-          inner='<span style="color:#fff">'+shortNum+'</span>'+(isGO?'<span style="font-size:6px;display:block;color:rgba(255,255,255,.85)">GO</span>':'');
+          inner='<span style="color:#fff;font-size:7px;text-align:center;display:block;line-height:1.2">'+shortNum+(isGO?'<br><span style="font-size:5px">GO</span>':'')+'<br>✓</span>';
         } else {
-          var bg=buildGradient(status.colors);
-          cellStyle='background:'+bg+';border-color:'+status.colors[0]+';';
+          // Couleur solide = la couleur dominante (pas de dégradé pour l'impression)
+          var mainColor=status.colors[0];
+          cellStyle='background:'+mainColor+';border-color:'+mainColor+';-webkit-print-color-adjust:exact;print-color-adjust:exact;';
           var todoCount=status.tasks.filter(function(r){return!r.fait;}).length;
           inner='<span style="color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5);display:block;text-align:center;line-height:1.2">'+shortNum+(isGO?'<span style="font-size:5px;display:block">GO</span>':'')+'</span>'
             +(todoCount>1?'<span style="position:absolute;top:-4px;right:-4px;background:#dc2626;color:#fff;border-radius:99px;font-size:6px;font-weight:900;padding:1px 4px;border:1px solid #fff">'+todoCount+'</span>':'');
