@@ -1766,9 +1766,16 @@ function renderPlan(){
         if(status.state==='no-task'){
           cellClass+='no-task';
           innerHtml=shortNum+(isGO?'<span style="font-size:7px;display:block;color:#94a3b8;font-weight:700">GO</span>':'');
+        // AVANT all-done, il faut impérativement all-v2 en premier :
+
+        } else if(status.state==='all-v2'){
+          cellClass+='all-v2';
+          innerHtml='<span style="color:#fff;font-weight:900;font-size:10px;line-height:1.1;text-align:center;display:block">'+shortNum+(isGO?'<br><span style="font-size:7px;font-weight:800;opacity:.9">GO</span>':'')+'<br><span style="font-size:8px;opacity:.9">✓✓</span></span>';
+
         } else if(status.state==='all-done'){
           cellClass+='all-done';
           innerHtml='<span style="color:#fff;font-weight:900;font-size:10px;line-height:1.1;text-align:center;display:block">'+shortNum+(isGO?'<br><span style="font-size:7px;font-weight:800;opacity:.9">GO</span>':'')+'<br><span style="font-size:9px;opacity:.95">✓</span></span>';
+      
         } else {
           cellStyle='background:'+buildGradient(status.colors)+';border-color:'+status.colors[0]+';';
           innerHtml='<span style="color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.6);font-weight:900;display:block;text-align:center;line-height:1.2">'+shortNum+(isGO?'<span style="font-size:7px;display:block;font-weight:800;opacity:.9">GO</span>':'')+'</span>';
@@ -2776,6 +2783,7 @@ function doPlanPDF(){
         } else if(status.state==='all-v2'){
           cellCls+='cell-v2';
           inner='<span style="color:#fff;font-size:7px;text-align:center;display:block;line-height:1.2">'+shortNum+(isGO?'<br><span style="font-size:5px">GO</span>':'')+'<br>✓✓</span>';
+
         } else if(status.state==='all-done'){
           cellCls+='cell-done';
           inner='<span style="color:#fff;font-size:7px;text-align:center;display:block;line-height:1.2">'+shortNum+(isGO?'<br><span style="font-size:5px">GO</span>':'')+'<br>✓</span>';
