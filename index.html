@@ -701,6 +701,25 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); disp
   cursor: pointer; transition: all .15s;
 }
 .pp-addline-btn:active { background: var(--blue-pale); }
+
+/* Boutons filtre type dans le plan */
+.plan-type-btn {
+  padding: 7px 14px; border-radius: 50px;
+  border: 2px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.08); color: rgba(255,255,255,.7);
+  font-family: var(--font); font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.plan-type-btn:active { transform: scale(.93); }
+.plan-type-btn.active {
+  background: #fff; color: var(--navy);
+  border-color: #fff; font-weight: 900;
+}
+.plan-type-btn[data-type="peinture"].active { background:#dbeafe;color:#1e40af;border-color:#93c5fd; }
+.plan-type-btn[data-type="menuiserie"].active { background:#fef3c7;color:#92400e;border-color:#fcd34d; }
+.plan-type-btn[data-type="plomb"].active { background:#fee2e2;color:#991b1b;border-color:#fca5a5; }
+.plan-type-btn[data-type="autre"].active { background:#dcfce7;color:#166534;border-color:#86efac; }
+  
 </style>
 </head>
 <body>
@@ -834,8 +853,17 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); disp
         <span class="size-lbl" id="cell-size-lbl">M</span>
         <button class="size-btn" onclick="setCellSize(+1)">+</button>
       </div>
+      <button class="tb-btn btn-pdf" onclick="doPlanPDF()" style="font-size:12px">🖨️ PDF</button>
       <div class="tb-btn btn-user" onclick="doLogout()"><div class="av" id="av4">?</div><span id="un4">—</span></div>
     </div>
+  </div>
+  <!-- Filtres type -->
+  <div style="background:var(--navy);padding:0 12px 12px;display:flex;gap:6px;flex-wrap:wrap;">
+    <button class="plan-type-btn active" data-type="" onclick="setPlanTypeFilter(this,'')">Tous</button>
+    <button class="plan-type-btn" data-type="peinture" onclick="setPlanTypeFilter(this,'peinture')">🎨 Peinture</button>
+    <button class="plan-type-btn" data-type="menuiserie" onclick="setPlanTypeFilter(this,'menuiserie')">🪵 Menuiserie</button>
+    <button class="plan-type-btn" data-type="plomb" onclick="setPlanTypeFilter(this,'plomb')">⚡ Plomberie/Élec</button>
+    <button class="plan-type-btn" data-type="autre" onclick="setPlanTypeFilter(this,'autre')">🔧 Autre</button>
   </div>
   <div class="plan-scroll">
     <div class="plan-legend">
@@ -1667,7 +1695,49 @@ function setCellSize(delta){
 }
 
 function toggleBat(id){var b=document.getElementById('bat-'+id);if(b)b.classList.toggle('bat-collapsed');}
+// Filtre type actif sur le plan
+var planTypeFilter = '';
 
+function setPlanTypeFilter(btn, type) {
+  planTypeFilter = type;
+  document.querySelectorAll('.plan-type-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderPlan();
+}
+
+// getRoomStatus avec filtre type optionnel
+function getRoomStatusFiltered(chambre, typeFilter) {
+  var rows = allRows.filter(function(r){ return r.chambre === chambre; });
+  if (!rows.length) return { state:'no-task', colors:[], tasks:[], total:0, done:0 };
+
+  // Si filtre type actif : on ne montre que les tâches du type concerné
+  var displayRows = rows;
+  if (typeFilter) {
+    displayRows = rows.filter(function(r){
+      var tl = (r.type||'').toLowerCase();
+      if (typeFilter==='peinture')   return tl.indexOf('peinture')>=0;
+      if (typeFilter==='menuiserie') return tl.indexOf('menuiserie')>=0;
+      if (typeFilter==='plomb')      return tl.indexOf('plomb')>=0||tl.indexOf('lectri')>=0;
+      if (typeFilter==='autre')      return tl.indexOf('peinture')<0&&tl.indexOf('menuiserie')<0&&tl.indexOf('plomb')<0&&tl.indexOf('lectri')<0;
+      return true;
+    });
+    // Si aucune tâche de ce type dans cette chambre : pas de tâche à afficher
+    if (!displayRows.length) return { state:'no-task', colors:[], tasks:[], total:0, done:0 };
+  }
+
+  var done = displayRows.filter(function(r){ return r.fait; }).length;
+  if (done === displayRows.length) {
+    var v2done = displayRows.filter(function(r){ return r.valide2; }).length;
+    var state = v2done === displayRows.length ? 'all-v2' : 'all-done';
+    return { state:state, colors:[], tasks:displayRows, total:displayRows.length, done:done };
+  }
+  var todo = displayRows.filter(function(r){ return !r.fait; });
+  var colorMap = {};
+  todo.forEach(function(r){ var c=getTypeColor(r.type||''); colorMap[c]=(colorMap[c]||0)+1; });
+  var colors = Object.keys(colorMap);
+  if (!colors.length) colors = [TYPE_COLORS['autre']];
+  return { state:'todo', colors:colors, tasks:displayRows, total:displayRows.length, done:done };
+}
 function renderPlan(){
   var s=CELL_SIZES[cellSizeIdx];
   document.documentElement.style.setProperty('--cell',s.px+'px');
@@ -1687,7 +1757,8 @@ function renderPlan(){
     plan.floors.forEach(function(floor){
       html+='<div class="floor-row"><div class="floor-lbl">'+floor.lbl+'</div><div class="floor-rooms">';
       floor.rooms.forEach(function(ch){
-        var status=getRoomStatus(ch);
+        // ── Utilise getRoomStatusFiltered pour tenir compte du filtre type
+        var status = getRoomStatusFiltered(ch, planTypeFilter);
         var isGO = ch.indexOf('GO')>=0;
         var shortNum=ch.replace(/GO$/i,'').replace(/^[A-Za-z]+/,'').replace(/^0+/,'');
         var cellClass='room-cell ',cellStyle='',innerHtml='';
@@ -1706,6 +1777,7 @@ function renderPlan(){
         }
         var todoCount=status.tasks.filter(function(r){return!r.fait;}).length;
         var badge=todoCount>1?'<span style="position:absolute;top:-5px;right:-5px;background:#dc2626;color:#fff;border-radius:99px;font-size:8px;font-weight:900;padding:2px 5px;min-width:16px;text-align:center;border:2px solid #fff">'+todoCount+'</span>':'';
+        // Au clic : on ouvre le panel avec les tâches complètes (pas filtrées)
         html+='<div class="'+cellClass+'" style="'+cellStyle+'" onclick="showPlanPanel(\''+ch+'\',getRoomStatus(\''+ch+'\'))">'+innerHtml+badge+'</div>';
       });
       html+='</div></div>';
@@ -1714,7 +1786,6 @@ function renderPlan(){
   });
   wrap.innerHTML=html;
 }
-
 function renderPlanGO(){
   var s=CELL_SIZES[cellSizeIdx];
   document.documentElement.style.setProperty('--cell',s.px+'px');
@@ -2633,7 +2704,105 @@ function closePdfOverlay(){
   document.getElementById('pdf-overlay').classList.remove('show');
   document.getElementById('pdf-iframe').srcdoc='';
 }
+// ══════════════════════════════════════════════════════════
+// PDF PLAN COMPLET
+// ══════════════════════════════════════════════════════════
+function doPlanPDF(){
+  var now=new Date(),p=pad;
+  var ds=p(now.getDate())+'/'+p(now.getMonth()+1)+'/'+now.getFullYear()+' '+p(now.getHours())+':'+p(now.getMinutes());
+  var filterLabel = planTypeFilter
+    ? ({'peinture':'Peinture','menuiserie':'Menuiserie','plomb':'Plomberie / Élec','autre':'Autre'}[planTypeFilter]||'')
+    : 'Tous types';
 
+  var h='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Plan Maintenance</title><style>'
+    +'@page{size:A4 landscape;margin:10mm 8mm}'
+    +'*{margin:0;padding:0;box-sizing:border-box}'
+    +'body{font-family:Arial,sans-serif;font-size:8px;color:#0f172a;background:#fff}'
+    +'.page-hdr{background:#0d1b35;color:#fff;padding:8px 14px;border-radius:6px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}'
+    +'.page-hdr-title{font-size:14px;font-weight:700}'
+    +'.page-hdr-meta{font-size:8px;color:rgba(255,255,255,.7);text-align:right;line-height:1.6}'
+    +'.legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px;padding:6px 10px;background:#f8fafc;border-radius:6px;border:1px solid #e2e8f0}'
+    +'.leg{display:flex;align-items:center;gap:5px;font-size:8px;font-weight:700;color:#475569}'
+    +'.leg-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}'
+    +'.bat-section{margin-bottom:10px;break-inside:avoid}'
+    +'.bat-hdr-pdf{background:#0d1b35;color:#fff;padding:6px 12px;border-radius:5px 5px 0 0;display:flex;align-items:center;justify-content:space-between}'
+    +'.bat-hdr-pdf-name{font-size:11px;font-weight:700}'
+    +'.bat-hdr-pdf-badge{font-size:9px;font-weight:700;background:rgba(255,255,255,.2);padding:2px 10px;border-radius:50px}'
+    +'.bat-body-pdf{border:1px solid #e2e8f0;border-top:none;border-radius:0 0 5px 5px;padding:6px 8px;background:#fff}'
+    +'.floor-row-pdf{display:flex;align-items:center;gap:4px;margin-bottom:4px}'
+    +'.floor-row-pdf:last-child{margin-bottom:0}'
+    +'.floor-lbl-pdf{font-size:9px;font-weight:900;color:#0d1b35;width:24px;text-align:center;flex-shrink:0;background:#f0f4f8;border-radius:4px;padding:3px 0;border:1px solid #e2e8f0}'
+    +'.floor-rooms-pdf{display:flex;flex-wrap:wrap;gap:3px;flex:1}'
+    +'.cell-pdf{width:34px;height:34px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;font-weight:900;border:1px solid transparent;position:relative;flex-shrink:0}'
+    +'.cell-no-task{background:#e2e8f0;border-color:#cbd5e1;color:#94a3b8}'
+    +'.cell-done{background:#059669;color:#fff}'
+    +'.cell-v2{background:#7c3aed;color:#fff}'
+    +'</style></head><body>';
+
+  h+='<div class="page-hdr">'
+    +'<div class="page-hdr-title">🏨 Plan Maintenance — '+filterLabel+'</div>'
+    +'<div class="page-hdr-meta">'+ds+(currentUser?' — '+currentUser:'')+'</div>'
+    +'</div>';
+
+  h+='<div class="legend">'
+    +'<div class="leg"><div class="leg-dot" style="background:#e2e8f0;border:1px solid #cbd5e1"></div>Aucune tâche</div>'
+    +'<div class="leg"><div class="leg-dot" style="background:#059669"></div>Tout fait ✓</div>'
+    +'<div class="leg"><div class="leg-dot" style="background:#7c3aed"></div>Contrôlé ✓✓</div>'
+    +'<div class="leg"><div class="leg-dot" style="background:#2563eb"></div>Peinture</div>'
+    +'<div class="leg"><div class="leg-dot" style="background:#d97706"></div>Menuiserie</div>'
+    +'<div class="leg"><div class="leg-dot" style="background:#dc2626"></div>Plomberie/Élec</div>'
+    +'</div>';
+
+  ['5T','A','B','C','D'].forEach(function(bat){
+    var plan=HOTEL_PLAN[bat];if(!plan)return;
+    var batTotal=0,batDone=0;
+    allRows.forEach(function(r){if(getBat(r.chambre)===bat){batTotal++;if(r.fait)batDone++;}});
+    var batPct=batTotal?Math.round(batDone/batTotal*100):0;
+    var badgeTxt=batTotal?(batDone+'/'+batTotal+' — '+batPct+'%'):'Aucune tâche';
+
+    h+='<div class="bat-section">'
+      +'<div class="bat-hdr-pdf"><div class="bat-hdr-pdf-name">'+plan.label+'</div><div class="bat-hdr-pdf-badge">'+badgeTxt+'</div></div>'
+      +'<div class="bat-body-pdf">';
+
+    plan.floors.forEach(function(floor){
+      h+='<div class="floor-row-pdf"><div class="floor-lbl-pdf">'+floor.lbl+'</div><div class="floor-rooms-pdf">';
+      floor.rooms.forEach(function(ch){
+        var status=getRoomStatusFiltered(ch, planTypeFilter);
+        var isGO=ch.indexOf('GO')>=0;
+        var shortNum=ch.replace(/GO$/i,'').replace(/^[A-Za-z]+/,'').replace(/^0+/,'');
+        var cellCls='cell-pdf ',cellStyle='',inner='';
+        if(status.state==='no-task'){
+          cellCls+='cell-no-task';
+          inner=shortNum+(isGO?'<span style="font-size:6px;display:block;color:#94a3b8">GO</span>':'');
+        } else if(status.state==='all-v2'){
+          cellCls+='cell-v2';
+          inner='<span style="color:#fff;font-size:7px;text-align:center;display:block;line-height:1.2">'+shortNum+(isGO?'<br><span style="font-size:5px">GO</span>':'')+'<br>✓✓</span>';
+        } else if(status.state==='all-done'){
+          cellCls+='cell-done';
+          inner='<span style="color:#fff">'+shortNum+'</span>'+(isGO?'<span style="font-size:6px;display:block;color:rgba(255,255,255,.85)">GO</span>':'');
+        } else {
+          var bg=buildGradient(status.colors);
+          cellStyle='background:'+bg+';border-color:'+status.colors[0]+';';
+          var todoCount=status.tasks.filter(function(r){return!r.fait;}).length;
+          inner='<span style="color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5);display:block;text-align:center;line-height:1.2">'+shortNum+(isGO?'<span style="font-size:5px;display:block">GO</span>':'')+'</span>'
+            +(todoCount>1?'<span style="position:absolute;top:-4px;right:-4px;background:#dc2626;color:#fff;border-radius:99px;font-size:6px;font-weight:900;padding:1px 4px;border:1px solid #fff">'+todoCount+'</span>':'');
+        }
+        h+='<div class="'+cellCls+'" style="'+cellStyle+'">'+inner+'</div>';
+      });
+      h+='</div></div>';
+    });
+    h+='</div></div>';
+  });
+
+  h+='</body></html>';
+
+  var iframe=document.getElementById('pdf-iframe');
+  iframe.srcdoc=h;
+  document.getElementById('pdf-overlay').classList.add('show');
+  // Changer le titre de l'overlay PDF
+  var titleEl=document.querySelector('.pdf-box-title');
+  if(titleEl) titleEl.textContent='🏨 Plan Maintenance — '+filterLabel;
+}
 function doPDF(){
   var f=getFiltered();if(!f.length){toast('Aucune donnée','err');return;}
   var now=new Date(),p=pad;
