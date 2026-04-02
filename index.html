@@ -876,8 +876,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);display:flex
 /* ══════════════════════════════════════════════════════════
    CONFIG & CONSTANTES
 ══════════════════════════════════════════════════════════ */
-var API_URL = 'https://script.google.com/macros/s/AKfycbwprrjzz_LYL8vtyeSpM37_9D2vQ5FXMnkBopPIv0QK5VfqrhcUVNxua9k9QICrR-lZ5g/exec';
-var API_TIMEOUT = 25000; // 25 s — Apps Script peut être lent au premier appel
+var API_URL = 'https://script.google.com/macros/s/AKfycbzkiR-fBgYmMjKJ7Wl0uzO2_M12T33ea_Qa5YXKe7ZbyaXXEiJn37Q9cFYWAarucOlTSw/exec';
+var API_TIMEOUT = 12000; // 25 s — Apps Script peut être lent au premier appel
 var CACHE_KEY   = 'maint_data_cache';
 var CACHE_TTL   = 5 * 60 * 1000; // 5 min
 
@@ -895,28 +895,21 @@ var TYPE_COLORS     = { peinture:'#2563eb', menuiserie:'#d97706', plomb:'#dc2626
 // Modifiez / complétez cette liste selon vos besoins hôteliers
 // ══════════════════════════════════════════════════════════
 var SUGGESTIONS_RECURRENTES = [
-  { label:'Vérification robinetterie', type:'Plomberie / électricité', ico:'🚿', recurrent:true, freq:'Hebdo' },
-  { label:'Vérification détecteur fumée', type:'Plomberie / électricité', ico:'🔥', recurrent:true, freq:'Mensuel' },
-  { label:'Vérification climatisation / chauffage', type:'Plomberie / électricité', ico:'❄️', recurrent:true, freq:'Mensuel' },
-  { label:'Contrôle serrure et verrou porte', type:'Menuiserie', ico:'🔐', recurrent:true, freq:'Hebdo' },
-  { label:'Vérification fenêtre / volet', type:'Menuiserie', ico:'🪟', recurrent:true, freq:'Hebdo' },
-  { label:'Contrôle prises électriques', type:'Plomberie / électricité', ico:'🔌', recurrent:true, freq:'Mensuel' },
-  { label:'Vérification éclairage chambre', type:'Plomberie / électricité', ico:'💡', recurrent:true, freq:'Hebdo' },
-  { label:'Contrôle WC / chasse d\'eau', type:'Plomberie / électricité', ico:'🚽', recurrent:true, freq:'Hebdo' },
-  { label:'Vérification mini-bar / réfrigérateur', type:'Plomberie / électricité', ico:'🧊', recurrent:true, freq:'Hebdo' },
-  { label:'Nettoyage filtre clim', type:'Plomberie / électricité', ico:'🌬️', recurrent:true, freq:'Mensuel' },
-  { label:'Vérification TV / télécommande', type:'Autre', ico:'📺', recurrent:true, freq:'Hebdo' },
-  { label:'Contrôle téléphone chambre', type:'Autre', ico:'📞', recurrent:true, freq:'Mensuel' },
-  { label:'Vérification coffre-fort', type:'Menuiserie', ico:'🔒', recurrent:true, freq:'Mensuel' },
+  { label:'Refixer porte PQ verticale',  type:'Menuiserie', ico:'🧻', recurrent:false, freq:'Hebdo' },
+  { label:'Refixer porte PQ horizontal',type:'Menuiserie', ico:'🧻', recurrent:false, freq:'Hebdo' },
+  { label:'Vérification douche', type:'Plomberie / électricité', ico:'❄️', recurrent:false, freq:'Mensuel' },
+  { label:'Contrôle / reglage porte', type:'Menuiserie', ico:'🚪', recurrent:false, freq:'Hebdo' },
+  { label:'Vérification fenêtre Ouverture / Fermeture', type:'Menuiserie', ico:'🪟', recurrent:false, freq:'Hebdo' },
+  { label:'Contrôle prises électriques', type:'Plomberie / électricité', ico:'🔌', recurrent:false, freq:'Mensuel' },
+  { label:'Vérification éclairage chambre ampoule', type:'Plomberie / électricité', ico:'💡', recurrent:false, freq:'Hebdo' },
+  { label:'Contrôle WC ', type:'Plomberie / électricité', ico:'🚽', recurrent:false, freq:'Hebdo' },
+  { label:'manque vis charnière', type:'Menuiserie', ico:'🚪', recurrent:false, freq:'Hebdo' },
+  { label:'ruban LED à récolter', type:'Menuiserie', ico:'🪟', recurrent:false, freq:'Hebdo' },
+  { label:'Cable téléphone tombé', type:'Menuiserie', ico:'📞', recurrent:false, freq:'Mensuel' },
   { label:'Reprise joint baignoire / douche', type:'Plomberie / électricité', ico:'🛁', recurrent:false },
-  { label:'Remplacement ampoule', type:'Plomberie / électricité', ico:'💡', recurrent:false },
   { label:'Retouche peinture mur', type:'Peinture', ico:'🎨', recurrent:false },
-  { label:'Remplacement poignée de porte', type:'Menuiserie', ico:'🚪', recurrent:false },
-  { label:'Débouchage siphon', type:'Plomberie / électricité', ico:'🔧', recurrent:false },
   { label:'Réparation rideau / tringle', type:'Menuiserie', ico:'🪟', recurrent:false },
-  { label:'Remplacement miroir fissuré', type:'Menuiserie', ico:'🪞', recurrent:false },
 ];
-
 /* ══════════════════════════════════════════════════════════
    PLAN HÔTEL
 ══════════════════════════════════════════════════════════ */
