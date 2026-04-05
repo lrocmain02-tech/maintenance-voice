@@ -2379,8 +2379,7 @@ function acBuildDD(data, q, cbKey) {
     html += '<div class="ac-section-hdr">&#x1F527; Reparations ponctuelles</div>';
     data.ponc.forEach(function(s){ html += item(s, false); });
   }
-  if (!html) html = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:14px;font-weight:600">Saisie libre &mdash; tapez votre description</div>';
-  return html;
+  if (!html) html = '';
 }
 
 /* ── helper : appliquer type dans la carte ecran Ajouter ── */
