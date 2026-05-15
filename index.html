@@ -1837,9 +1837,11 @@ function getFiltered() {
     // Filtre mots-clés : TOUS les mots doivent matcher (dans réparation, chambre, type ou commentaire)
     if (kwList.length) {
       var haystack = [r.reparation, r.chambre, r.type, r.commentaire].join(' ').toLowerCase();
-      for (var i=0; i<kwList.length; i++) {
-        if (haystack.indexOf(kwList[i]) < 0) return false;
-      }
+      var found = false;
+for (var i=0; i<kwList.length; i++) {
+  if (haystack.indexOf(kwList[i]) >= 0) { found = true; break; }
+}
+if (!found) return false;
     }
     return true;
   });
