@@ -2028,86 +2028,92 @@ function toggleRoom(ch) {
    TOGGLE STATUT TECH
 ══════════════════════════════════════════════════════════ */
 function doToggle(rowNum, el) {
-  el.classList.add('loading');
   var row = allRows.find(function(r){ return String(r.row)===String(rowNum); });
+  if (!row) return;
+
+  // Sauvegarde pour rollback si erreur
+  var prevFait = row.fait;
+  var prevValidePar = row.validePar;
+  var k = rk(row);
+  var prevLocal = localDates[k];
+
+  // ── Mise à jour immédiate de l'UI ──
+  row.fait = !row.fait;
+  if (row.fait) {
+    localDates[k] = { d:nowStr(), p:currentUser };
+    row.validePar = currentUser;
+  } else {
+    localDates[k] = null; row.validePar = '';
+    row.valide2 = false; localDates2[k] = null; row.validePar2 = '';
+  }
+  render();
+  if (document.getElementById('sc-plan').classList.contains('active'))   renderPlan();
+  if (document.getElementById('sc-plango').classList.contains('active')) renderPlanGO();
+
+  // ── Envoi en arrière-plan ──
   apiFetch('POST', {action:'toggleStatus', rowNumber:rowNum, userName:currentUser})
     .then(function() {
-      if (row) {
-        row.fait = !row.fait;
-        var k = rk(row);
-        if (row.fait) {
-          localDates[k] = { d:nowStr(), p:currentUser };
-          row.validePar = currentUser;
-          toast('✓ Marqué comme fait !','ok');
-        } else {
-          localDates[k] = null; row.validePar='';
-          row.valide2=false; localDates2[k]=null; row.validePar2='';
-          toast('↩ Remis à faire');
-        }
-      }
-      el.classList.remove('loading');
-      render();
-      if (document.getElementById('sc-plan').classList.contains('active'))   renderPlan();
-      if (document.getElementById('sc-plango').classList.contains('active')) renderPlanGO();
+      toast(row.fait ? '✓ Marqué comme fait !' : '↩ Remis à faire', row.fait ? 'ok' : '');
     })
-    .catch(function(err){ el.classList.remove('loading'); toast('Erreur: '+(err.message||err),'err'); });
+    .catch(function(err) {
+      // Rollback
+      row.fait = prevFait; row.validePar = prevValidePar;
+      localDates[k] = prevLocal;
+      render();
+      toast('Erreur: '+(err.message||err), 'err');
+    });
 }
 
-/* ══════════════════════════════════════════════════════════
-   TOGGLE VALIDATION SUPERVISEUR
-══════════════════════════════════════════════════════════ */
 function doToggle2(rowNum, evt) {
   if (!isSupervisor()) { toast('Accès réservé aux Assistants et RT','err'); return; }
   var row = allRows.find(function(r){ return String(r.row)===String(rowNum); });
+  if (!row) return;
 
-  // Si on active le ✓✓ et que le ✓ tech n'est pas encore coché
-  // → on coche les deux en une seule action
-  var needsToggle1 = row && !row.fait && !row.valide2;
+  var k = rk(row);
+  var prevFait = row.fait, prevValidePar = row.validePar;
+  var prevValide2 = row.valide2, prevValidePar2 = row.validePar2;
+  var prevLocal = localDates[k], prevLocal2 = localDates2[k];
+  var needsToggle1 = !row.fait && !row.valide2;
 
-  function doV2() {
-    apiFetch('POST', {action:'toggleValidation2', rowNumber:rowNum, userName:currentUser})
-      .then(function() {
-        if (row) {
-          row.valide2 = !row.valide2;
-          var k = rk(row);
-          if (row.valide2) {
-            localDates2[k] = { d:nowStr(), p:currentUser };
-            row.validePar2 = currentUser;
-            toast('✓✓ Contrôle validé !','ok');
-          } else {
-            localDates2[k]=null; row.validePar2='';
-            // Si on retire ✓✓, on retire aussi ✓ pour remettre à zéro
-            if (row.fait) {
-              row.fait=false; localDates[k]=null; row.validePar='';
-              apiFetch('POST', {action:'toggleStatus', rowNumber:rowNum, userName:currentUser}).catch(function(){});
-            }
-            toast('↩ Contrôle retiré');
-          }
-        }
-        render();
-        if (document.getElementById('sc-plan').classList.contains('active')) renderPlan();
-      })
-      .catch(function(err){ toast('Erreur: '+(err.message||err),'err'); });
-  }
-
+  // ── Mise à jour immédiate de l'UI ──
   if (needsToggle1) {
-    // Coche d'abord le ✓ tech, puis enchaîne le ✓✓
-    apiFetch('POST', {action:'toggleStatus', rowNumber:rowNum, userName:currentUser})
-      .then(function() {
-        if (row) {
-          row.fait = true;
-          var k = rk(row);
-          localDates[k] = { d:nowStr(), p:currentUser };
-          row.validePar = currentUser;
-        }
-        doV2();
-      })
-      .catch(function(err){ toast('Erreur: '+(err.message||err),'err'); });
-  } else {
-    doV2();
+    row.fait = true;
+    localDates[k] = { d:nowStr(), p:currentUser };
+    row.validePar = currentUser;
   }
-}
+  row.valide2 = !row.valide2;
+  if (row.valide2) {
+    localDates2[k] = { d:nowStr(), p:currentUser };
+    row.validePar2 = currentUser;
+  } else {
+    localDates2[k] = null; row.validePar2 = '';
+    row.fait = false; localDates[k] = null; row.validePar = '';
+  }
+  render();
+  if (document.getElementById('sc-plan').classList.contains('active')) renderPlan();
 
+  // ── Envoi en arrière-plan ──
+  function doV2() {
+    return apiFetch('POST', {action:'toggleValidation2', rowNumber:rowNum, userName:currentUser});
+  }
+
+  var chain = needsToggle1
+    ? apiFetch('POST', {action:'toggleStatus', rowNumber:rowNum, userName:currentUser}).then(doV2)
+    : doV2();
+
+  chain
+    .then(function() {
+      toast(row.valide2 ? '✓✓ Contrôle validé !' : '↩ Contrôle retiré', row.valide2 ? 'ok' : '');
+    })
+    .catch(function(err) {
+      // Rollback
+      row.fait = prevFait; row.validePar = prevValidePar;
+      row.valide2 = prevValide2; row.validePar2 = prevValidePar2;
+      localDates[k] = prevLocal; localDates2[k] = prevLocal2;
+      render();
+      toast('Erreur: '+(err.message||err), 'err');
+    });
+}
 /* ══════════════════════════════════════════════════════════
    PLAN — UTILITAIRES COULEURS
 ══════════════════════════════════════════════════════════ */
