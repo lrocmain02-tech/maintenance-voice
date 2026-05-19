@@ -3606,22 +3606,26 @@ function renderEquipe() {
         +   '</div>'
         +   '<div class="eq-day-tasks">';
 
-      tasks.forEach(function(r) {
-        var tl=(r.type||'').toLowerCase();
-        var lineCls='eq-task-line';
-        var typeShort='—';
-        if(tl.indexOf('menuiserie')>=0){ lineCls+=' type-m'; typeShort='🪵'; }
-        else if(tl.indexOf('peinture')>=0){ lineCls+=' type-p'; typeShort='🎨'; }
-        else if(tl.indexOf('plomb')>=0||tl.indexOf('lectri')>=0){ lineCls+=' type-e'; typeShort='⚡'; }
-        else { lineCls+=' type-a'; typeShort='🔧'; }
-        html += '<div class="'+lineCls+'">'
-          + '<span class="eq-task-ch">'+esc(r.chambre)+'</span>'
-          + '<span class="eq-task-sep">›</span>'
-          + '<span class="eq-task-desc">'+esc(r.reparation)+'</span>'
-          + '<span class="eq-task-type">'+typeShort+'</span>'
-          + '</div>';
-      });
-
+      tasks.slice().sort(function(a,b){
+  var ka=rk(a), kb=rk(b);
+  var da=localDates[ka]?localDates[ka].d:(a.dateValidation||'');
+  var db=localDates[kb]?localDates[kb].d:(b.dateValidation||'');
+  return da.localeCompare(db);
+}).forEach(function(r) {
+  var tl=(r.type||'').toLowerCase();
+  var lineCls='eq-task-line';
+  var typeShort='—';
+  if(tl.indexOf('menuiserie')>=0){ lineCls+=' type-m'; typeShort='🪵'; }
+  else if(tl.indexOf('peinture')>=0){ lineCls+=' type-p'; typeShort='🎨'; }
+  else if(tl.indexOf('plomb')>=0||tl.indexOf('lectri')>=0){ lineCls+=' type-e'; typeShort='⚡'; }
+  else { lineCls+=' type-a'; typeShort='🔧'; }
+  html += '<div class="'+lineCls+'">'
+    + '<span class="eq-task-ch">'+esc(r.chambre)+'</span>'
+    + '<span class="eq-task-sep">›</span>'
+    + '<span class="eq-task-desc">'+esc(r.reparation)+'</span>'
+    + '<span class="eq-task-type">'+typeShort+'</span>'
+    + '</div>';
+});
       html += '</div></div>'
         + '</div>';
     });
