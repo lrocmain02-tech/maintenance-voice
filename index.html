@@ -1608,7 +1608,7 @@ function pad(n) { return String(n).padStart(2,'0'); }
    HOUR_OFFSET permet de corriger un éventuel décalage serveur si besoin
    (0 = aucune correction ; le Sheet écrit maintenant l'heure en texte brut,
    donc plus de conversion automatique parasite côté Apps Script). */
-var HOUR_OFFSET = 0;
+var HOUR_OFFSET = -2;
 
 function parseDateTimeCorrected(raw) {
   if (!raw) return null;
